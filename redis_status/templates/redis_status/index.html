@@ -70,12 +70,12 @@ div.cache_graph_value{
                     elem.style.display = 'none';
                 }
                 return false;
-            ">{{ server.0 }} - {% widthratio server.1.used_memory server.1.maxmemory 100 %}% load</a>
+            ">{{ server.url }} - {% widthratio server.used_memory server.max_memory 100 %}% load</a>
         </caption>
         <thead>
         <tr><td colspan="2">
             <div class="cache_graph">
-                <div class="cache_graph_value" style="width: {% widthratio server.1.used_memory server.1.maxmemory 100 %}%"></div>
+                <div class="cache_graph_value" style="width: {% widthratio server.used_memory server.max_memory 100 %}%"></div>
             </div>
         </td></tr>
         </thead>
@@ -83,16 +83,16 @@ div.cache_graph_value{
         <tr>
             <th>{% trans "Miss Ratio" %}</th>
             <td>
-                {% widthratio server.1.keyspace_misses server.1.key_operations 100 %}%
+                {% widthratio server.keyspace_misses server.key_operations 100 %}%
                 <div class="cache_graph inline">
-                    <div class="cache_graph_value" style="width: {% widthratio server.1.keyspace_misses server.1.key_operations 100 %}%"></div>
+                    <div class="cache_graph_value" style="width: {% widthratio server.keyspace_misses server.key_operations 100 %}%"></div>
                 </div>
             </td>
         </tr>
         {# ----- Detailed Statistics ----- #}
         <tr><th class="cache_title" colspan="2">{% trans "Detailed Statistics:" %}</th></tr>
-        {% for k,v in server.1.items %}
-        <tr><th>{{ k|prettyname }}</th><td>{{ v }}</td></tr>
+        {% for stat in server.detailed_stats %}
+        <tr><th>{{ stat.0 }}</th><td>{{ stat.1 }}</td></tr>
         {% endfor %}
         </tbody>
         </table>

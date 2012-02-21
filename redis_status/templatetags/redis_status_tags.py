@@ -4,18 +4,39 @@ from django.conf import settings
 
 register = template.Library()
 
-DETAILED_STATS = ('used_memory',
-                  'used_memory_human',
-                  'used_memory_peak_human',
-                  'redis_version',
+DETAILED_STATS = ('redis_version',
                   'connected_clients',
-                  'keyspace_hits',
-                  'keyspace_misses',
-                  'mem_fragmentation_ratio',
                   'used_cpu_sys',
                   'used_cpu_user',
+                  'used_memory_human',
+                  'used_memory_peak_human',
+                  'max_memory_human',
+                  'mem_fragmentation_ratio',
+                  'keyspace_hits',
+                  'keyspace_misses',
                   'expired_keys',
                   'evicted_keys',)
+
+
+def _prettyname (name):
+    return ' '.join([word.capitalize() for word in name.split('_')])
+
+
+def _human_bytes (bytes):
+    bytes = float(bytes)
+    if bytes >= 1073741824:
+        gigabytes = bytes / 1073741824
+        size = '%.2fG' % gigabytes
+    elif bytes >= 1048576:
+        megabytes = bytes / 1048576
+        size = '%.2fM' % megabytes
+    elif bytes >= 1024:
+        kilobytes = bytes / 1024
+        size = '%.2fK' % kilobytes
+    else:
+        size = '%.2fB' % bytes
+    return size
+
 
 class CacheStats(template.Node):
     """
@@ -28,18 +49,19 @@ class CacheStats(template.Node):
             client = getattr(cache.get_cache(cache_name), '_client', None)
             if client is not None:
                 kw = client.connection_pool.connection_kwargs
-                server = 'redis://%s:%s/%s' % (kw['host'], kw['port'], kw['db'])
-                stats = dict((k, v) for k,v in client.info().iteritems() if k in DETAILED_STATS)
-                stats['key_operations'] = stats['keyspace_hits'] + stats['keyspace_misses']
-                stats['maxmemory'] = client.config_get()['maxmemory']
-                cache_stats.append((server, stats))
+                server_data = { 'url' : 'redis://%s:%s/%s' % (kw['host'], kw['port'], kw['db']) }
+                server_data['max_memory'] = client.config_get()['maxmemory']
+                stats = client.info()
+                stats['max_memory_human'] = _human_bytes(server_data['max_memory'])
+                server_data['used_memory'] = stats['used_memory']
+                server_data['keyspace_misses'] = stats['keyspace_misses']
+                server_data['key_operations'] = stats['keyspace_hits'] + stats['keyspace_misses']
+                server_data['detailed_stats'] = ((_prettyname(key), stats[key],) for key in DETAILED_STATS)
+                cache_stats.append(server_data)
         context['cache_stats'] = cache_stats
         return ''
+
 
 @register.tag
 def get_cache_stats (parser, token):
     return CacheStats()
-
-@register.filter
-def prettyname (name):
-    return ' '.join([word.capitalize() for word in name.split('_')])
