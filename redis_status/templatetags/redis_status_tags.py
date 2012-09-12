@@ -1,5 +1,6 @@
 from django import template
 from django.core import cache
+from django.core.cache import InvalidCacheBackendError
 from django.conf import settings
 
 register = template.Library()
@@ -46,8 +47,12 @@ class CacheStats(template.Node):
     def render (self, context):
         cache_stats = []
         for cache_name in settings.CACHES.keys():
-            client = getattr(cache.get_cache(cache_name), '_client', None)
-            if client is not None:
+            try:
+                redis_cache = cache.get_cache(cache_name)
+            except InvalidCacheBackendError:
+                continue
+
+            for client in redis_cache.clients:
                 kw = client.connection_pool.connection_kwargs
                 server_data = { 'url' : 'redis://%s:%s/%s' % (kw['host'], kw['port'], kw['db']) }
                 server_data['max_memory'] = client.config_get()['maxmemory']
@@ -58,6 +63,7 @@ class CacheStats(template.Node):
                 server_data['key_operations'] = stats['keyspace_hits'] + stats['keyspace_misses']
                 server_data['detailed_stats'] = ((_prettyname(key), stats[key],) for key in DETAILED_STATS)
                 cache_stats.append(server_data)
+
         context['cache_stats'] = cache_stats
         return ''
 
