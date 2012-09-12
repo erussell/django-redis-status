@@ -47,12 +47,11 @@ class CacheStats(template.Node):
     def render (self, context):
         cache_stats = []
         for cache_name in settings.CACHES.keys():
-            try:
-                redis_cache = cache.get_cache(cache_name)
-            except InvalidCacheBackendError:
-                continue
+            c = cache.get_cache(cache_name)
+            client = getattr(c, '_client', None)
+            clients = [client] if client else getattr(c, 'clients', [])
 
-            for client in redis_cache.clients:
+            for client in clients:
                 kw = client.connection_pool.connection_kwargs
                 server_data = { 'url' : 'redis://%s:%s/%s' % (kw['host'], kw['port'], kw['db']) }
                 server_data['max_memory'] = client.config_get()['maxmemory']
