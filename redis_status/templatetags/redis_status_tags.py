@@ -1,6 +1,5 @@
 from django import template
 from django.core import cache
-from django.core.cache import InvalidCacheBackendError
 from django.conf import settings
 
 register = template.Library()
@@ -18,10 +17,8 @@ DETAILED_STATS = ('redis_version',
                   'expired_keys',
                   'evicted_keys',)
 
-
 def _prettyname (name):
     return ' '.join([word.capitalize() for word in name.split('_')])
-
 
 def _human_bytes (bytes):
     bytes = float(bytes)
@@ -38,7 +35,6 @@ def _human_bytes (bytes):
         size = '%.2fB' % bytes
     return size
 
-
 class CacheStats(template.Node):
     """
     Reads the cache stats out of the memcached cache backend. Returns `None`
@@ -50,7 +46,6 @@ class CacheStats(template.Node):
             c = cache.get_cache(cache_name)
             client = getattr(c, '_client', None)
             clients = [client] if client else getattr(c, 'clients', [])
-
             for client in clients:
                 kw = client.connection_pool.connection_kwargs
                 server_data = { 'url' : 'redis://%s:%s/%s' % (kw['host'], kw['port'], kw['db']) }
@@ -62,10 +57,8 @@ class CacheStats(template.Node):
                 server_data['key_operations'] = stats['keyspace_hits'] + stats['keyspace_misses']
                 server_data['detailed_stats'] = ((_prettyname(key), stats.get(key, 'Not supported'),) for key in DETAILED_STATS)
                 cache_stats.append(server_data)
-
         context['cache_stats'] = cache_stats
         return ''
-
 
 @register.tag
 def get_cache_stats (parser, token):
