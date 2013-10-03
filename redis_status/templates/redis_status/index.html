@@ -70,7 +70,7 @@ div.cache_graph_value{
                     elem.style.display = 'none';
                 }
                 return false;
-            ">{{ server.url }} - {% widthratio server.used_memory server.max_memory 100 %}% full</a>
+            ">{{ server.name}} - {{ server.url }} - {% widthratio server.used_memory server.max_memory 100 %}% full</a>
         </caption>
         <thead>
         <tr><td colspan="2">

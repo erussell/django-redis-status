@@ -17,38 +17,41 @@ DETAILED_STATS = ('redis_version',
                   'expired_keys',
                   'evicted_keys',)
 
-def _prettyname (name):
+
+def _prettyname(name):
     return ' '.join([word.capitalize() for word in name.split('_')])
 
-def _human_bytes (bytes):
-    bytes = float(bytes)
-    if bytes >= 1073741824:
-        gigabytes = bytes / 1073741824
+
+def _human_bytes(size_bytes):
+    size_bytes = float(size_bytes)
+    if size_bytes >= 1073741824:
+        gigabytes = size_bytes / 1073741824
         size = '%.2fG' % gigabytes
-    elif bytes >= 1048576:
-        megabytes = bytes / 1048576
+    elif size_bytes >= 1048576:
+        megabytes = size_bytes / 1048576
         size = '%.2fM' % megabytes
-    elif bytes >= 1024:
-        kilobytes = bytes / 1024
+    elif size_bytes >= 1024:
+        kilobytes = size_bytes / 1024
         size = '%.2fK' % kilobytes
     else:
-        size = '%.2fB' % bytes
+        size = '%.2fB' % size_bytes
     return size
+
 
 class CacheStats(template.Node):
     """
     Reads the cache stats out of the memcached cache backend. Returns `None`
     if no cache stats supported.
     """
-    def render (self, context):
+    def render(self, context):
         cache_stats = []
         for cache_name in settings.CACHES.keys():
-            c = cache.get_cache(cache_name)
-            client = getattr(c, '_client', None)
-            clients = [client] if client else getattr(c, 'clients', [])
+            redis_cache = cache.get_cache(cache_name)
+            client = getattr(redis_cache, '_client', None)
+            clients = [client] if client else getattr(redis_cache, 'clients', [])
             for client in clients:
                 kw = client.connection_pool.connection_kwargs
-                server_data = { 'url' : 'redis://%s:%s/%s' % (kw['host'], kw['port'], kw['db']) }
+                server_data = {'name': cache_name, 'url': 'redis://%s:%s/%s' % (kw['host'], kw['port'], redis_cache.db)}
                 server_data['max_memory'] = client.config_get()['maxmemory']
                 stats = client.info()
                 stats['max_memory_human'] = _human_bytes(server_data['max_memory'])
@@ -60,6 +63,7 @@ class CacheStats(template.Node):
         context['cache_stats'] = cache_stats
         return ''
 
+
 @register.tag
-def get_cache_stats (parser, token):
+def get_cache_stats(parser, token):
     return CacheStats()

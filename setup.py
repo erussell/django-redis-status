@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-redis-status',
-    version='1.0.4',
-    description='A django application that displays the load and some other statistics about your memcached instances in the admin.',
+    version='1.0.5',
+    description='A django application that displays the load and some other statistics about your redis cache instances in the admin.',
     long_description=open('README.md').read(),
     author='Eric Russell',
     author_email='erussell@ngs.org',
