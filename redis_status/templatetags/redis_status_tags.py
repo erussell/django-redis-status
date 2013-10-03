@@ -51,7 +51,7 @@ class CacheStats(template.Node):
             clients = [client] if client else getattr(redis_cache, 'clients', [])
             for client in clients:
                 kw = client.connection_pool.connection_kwargs
-                server_data = {'name': cache_name, 'url': 'redis://%s:%s/%s' % (kw['host'], kw['port'], redis_cache.db)}
+                server_data = {'name': cache_name, 'url': 'redis://%s:%s/%s' % (kw['host'], kw['port'], kw['db'])}
                 server_data['max_memory'] = client.config_get()['maxmemory']
                 stats = client.info()
                 stats['max_memory_human'] = _human_bytes(server_data['max_memory'])
