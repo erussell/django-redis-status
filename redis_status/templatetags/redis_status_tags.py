@@ -40,7 +40,7 @@ def _human_bytes(size_bytes):
 
 class CacheStats(template.Node):
     """
-    Reads the cache stats out of the memcached cache backend. Returns `None`
+    Reads the cache stats out of the redis cache backend. Returns `None`
     if no cache stats supported.
     """
     def render(self, context):
