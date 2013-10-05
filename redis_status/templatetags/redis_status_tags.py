@@ -58,7 +58,7 @@ class CacheStats(template.Node):
                 server_data['used_memory'] = stats['used_memory']
                 server_data['keyspace_misses'] = stats['keyspace_misses']
                 server_data['key_operations'] = stats['keyspace_hits'] + stats['keyspace_misses']
-                server_data['detailed_stats'] = ((_prettyname(key), stats.get(key, 'Not supported'),) for key in DETAILED_STATS)
+                server_data['detailed_stats'] = [(_prettyname(key), stats.get(key, 'Not supported'),) for key in DETAILED_STATS]
                 cache_stats.append(server_data)
         context['cache_stats'] = cache_stats
         return ''
